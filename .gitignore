@@ -12,3 +12,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Artefatos dos testes Playwright
+test-results/
+playwright-report/

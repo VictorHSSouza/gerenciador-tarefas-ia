@@ -1,0 +1,27 @@
+{
+  "name": "gerenciador-tarefas-v2",
+  "version": "1.0.0",
+  "description": "Sistema web para uma atividade acadêmica de Desenvolvimento de Software com IA. Implementado com HTML5, CSS3 e JavaScript puro, sem frameworks, bibliotecas externas, recursos de terceiros ou banco de dados remoto.",
+  "main": "script.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VictorHSSouza/gerenciador-tarefas-ia.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/VictorHSSouza/gerenciador-tarefas-ia/issues"
+  },
+  "homepage": "https://github.com/VictorHSSouza/gerenciador-tarefas-ia#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}

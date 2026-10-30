@@ -4,7 +4,7 @@ Sistema web para uma atividade acadêmica de Desenvolvimento de Software com IA.
 
 ## Executar localmente
 
-1. Mantenha `index.html`, `style.css` e `script.js` na mesma pasta.
+1. Mantenha `index.html`, `style.css` e `script.js` na mesma pasta, junto com a subpasta `js/` e seus três arquivos.
 2. Abra `index.html` em um navegador moderno (Chrome, Edge, Firefox ou Safari atualizado). Não é necessária instalação ou compilação.
 3. Para uma origem local estável, recomenda-se servir a pasta por HTTP. Se tiver Python instalado, abra um terminal nesta pasta e execute:
 
@@ -34,9 +34,14 @@ O título é obrigatório (até 120 caracteres); a descrição aceita até 2.000
 | --- | --- |
 | `index.html` | Estrutura semântica, filtros, resumos e diálogos |
 | `style.css` | Layout, cores, estados e adaptação para celulares |
-| `script.js` | CRUD, validação, manipulação segura do DOM e persistência |
+| `script.js` | Estado da aplicação, coordenação do CRUD e eventos de sincronização |
+| `js/task-rules.js` | Regras de datas, validação, IDs, pesquisa, filtros e contadores |
+| `js/task-storage.js` | Leitura/escrita do LocalStorage e snapshot de concorrência |
+| `js/task-view.js` | DOM, cartões, diálogos, formulários e mensagens |
 | `README.md` | Instruções e roteiro de testes manuais |
 | `.gitignore` | Exclusões de arquivos locais no Git |
+| `BUGS_CONHECIDOS.md` | Pendências de comportamento preservadas na refatoração |
+| `REFATORACAO.md` | Etapas da refatoração e resultados de verificação |
 
 ## Persistência e segurança
 
@@ -96,6 +101,45 @@ Este roteiro descreve verificações a executar; não é um relatório de result
 9. Verifique em uma janela estreita (por exemplo, 360 px), tablet e desktop: sem rolagem horizontal, controles legíveis e diálogos utilizáveis. Use títulos longos e descrições com quebras de linha.
 10. Navegue com `Tab`/`Shift+Tab`, use `Enter` para botões, espaço para a caixa de status e `Esc` para fechar diálogos. Confira o foco visível e as mensagens.
 
-## Escopo desta entrega
+## Testes automatizados de integração (Prompt 3)
+
+Requisitos: Node.js 20 ou superior e npm. Na primeira execução, instale as dependências e o Chromium:
+
+```sh
+npm ci
+npx playwright install chromium
+```
+
+Depois, execute toda a suíte com um único comando:
+
+```sh
+npx playwright test
+```
+
+`npm test` é um atalho equivalente. Não é necessário abrir a aplicação nem iniciar um servidor manualmente. `playwright.config.js` usa `tests/support/global-setup.cjs` para iniciar e encerrar o servidor HTTP estático de `tests/support/static-server.cjs`, restrito a `127.0.0.1:4173`. A porta precisa estar livre. O servidor entrega apenas os arquivos da aplicação; não existe API, banco ou back-end artificial. O ciclo de vida usa a API HTTP do Node, sem depender do encerramento de processos por `taskkill` no Windows.
+
+Os 13 cenários de `tests/tarefas.spec.js` são executados em dois projetos Chromium: desktop (1280 × 800) e celular (360 × 800, com toque), totalizando 26 testes. Cobrem cadastro e consulta, título vazio e só espaços, prazo obrigatório, edição e cancelamento, conclusão e reabertura, confirmação/cancelamento de exclusão, pesquisa, filtros combinados, persistência, caracteres especiais/HTML literal e responsividade. Erros JavaScript não tratados também fazem o teste falhar.
+
+Cada teste recebe um contexto de navegador novo, com armazenamento vazio. Os cenários de `tarefas.spec.js` criam suas tarefas fictícias pela interface. O LocalStorage real é lido para conferência e preservado durante as recargas; não há simulação, dados pessoais, perfil persistente ou estado compartilhado entre testes. Não há tentativas automáticas adicionais (`retries: 0`).
+
+Na refatoração foi acrescentado um cenário em `tests/compatibilidade.spec.js`, também executado nos dois projetos, totalizando **28 testes** na suíte atual. Esse cenário grava um JSON sintético do formato anterior diretamente no LocalStorage real e recarrega a aplicação: verifica a leitura sem regravação automática e a preservação do ID e demais campos ao editar pela interface. Essa preparação específica não substitui nem intercepta a API Storage.
+
+Os resultados são gerados em `test-results/results.json` e `playwright-report/index.html`. Para abrir o relatório interativo, use `npx playwright show-report`. Capturas e traces são mantidos quando há falha. Esses artefatos estão no `.gitignore`.
+
+A emulação de celular verifica o layout e as interações no Chromium; não substitui um aparelho físico. A suíte não cobre todos os achados da auditoria, como falhas de quota/permissão, dados corrompidos, concorrência entre abas e atualização na virada do dia. Nenhum resultado da suíte implica que esses problemas foram corrigidos.
+
+### Resultado da execução do Prompt 3 em 30/10/2026 (antes da refatoração)
+
+Comando executado: `npx playwright test`, no Windows, com Node.js 24.15.0 e Playwright 1.64.1. Resultado final: **26 aprovados, 0 falhas, 0 ignorados e 0 instáveis**, em 21,5 segundos, com saída 0. Foram executados 13 cenários em cada um dos dois projetos Chromium.
+
+Na primeira execução, os testes passaram, mas o encerramento do servidor iniciado pelo mecanismo `webServer` ficou pendente neste ambiente Windows e exigiu interromper o processo específico do servidor de teste. O setup foi ajustado para gerenciar diretamente o servidor HTTP no processo de configuração. O comando completo foi então repetido, encerrando automaticamente com o resultado acima. Nenhuma expectativa dos testes foi relaxada e nenhum arquivo da aplicação (`index.html`, `style.css` ou `script.js`) foi alterado; seus hashes SHA-256 permaneceram iguais. Não foi observado defeito funcional nos cenários executados. Os limites de cobertura descritos acima permanecem.
+
+## Refatoração aprovada
+
+O JavaScript foi separado em regras (`js/task-rules.js`), persistência (`js/task-storage.js`), interface (`js/task-view.js`) e controlador (`script.js`). Os scripts clássicos são carregados em ordem com `defer`, sem compilação ou frameworks. A chave e o formato dos dados do LocalStorage foram preservados, sem migração automática.
+
+A suíte original passou antes e depois de cada extração: 26 testes por etapa. A verificação final, incluindo o novo cenário de compatibilidade em desktop e celular, terminou com **28 aprovados e 0 falhas**, em 18,5 segundos. Consulte [REFATORACAO.md](REFATORACAO.md) para as etapas e evidências, e [BUGS_CONHECIDOS.md](BUGS_CONHECIDOS.md) para as pendências preservadas. O comando continua sendo `npx playwright test`.
+
+## Escopo da implementação inicial (registro histórico)
 
 Esta é a implementação inicial. Os quatro prompts de auditoria não foram executados, e este documento não declara resultados de testes manuais ou de auditorias. O arquivo vazio `AUDITORIA.md` já existente no diretório não foi alterado.
