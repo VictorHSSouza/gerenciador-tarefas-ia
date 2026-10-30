@@ -1,0 +1,14 @@
+# Arquivos locais de editores e sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
+
+# Dependências e configurações locais (não necessárias para executar)
+node_modules/
+.env
+.env.*
+!.env.example
