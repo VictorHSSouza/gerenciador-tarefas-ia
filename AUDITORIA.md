@@ -2,6 +2,12 @@
 
 Data: 30/10/2026. Escopo: aplicação local em HTML, CSS e JavaScript puro, com LocalStorage.
 
+## Atualização posterior à auditoria
+
+O texto a partir de “Método e limites” é o relatório histórico da versão inicialmente auditada. Depois dele foram implementados os testes do Prompt 3 e a refatoração aprovada. Na etapa de correções de segurança, foram corrigidas a validação permissiva de tipos e a classificação incorreta de falhas de renderização como falhas de escrita. O formulário recebeu orientação sobre dados sensíveis. Os resultados reais por etapa estão em [CORRECOES_SEGURANCA.md](CORRECOES_SEGURANCA.md).
+
+O achado A03 deixou de representar ausência de suíte, mas a cobertura continua parcial. A01 (concorrência), A02 (recuperação), A04 (foco) e A05 (virada de dia) permanecem pendentes. Os arquivos e linhas abaixo referem-se à versão original; consulte [BUGS_CONHECIDOS.md](BUGS_CONHECIDOS.md) para os locais e estados atuais. As alternativas complexas estão em [PROXIMAS_CORRECOES.md](PROXIMAS_CORRECOES.md), aguardando aprovação.
+
 ## Método e limites
 
 Foi realizada leitura estática de `index.html`, `style.css`, `script.js`, `README.md` e `.gitignore`, com referências às linhas da versão inspecionada. Foi feita uma listagem dos arquivos, inclusive ocultos, e da pasta `tests/`, que estava vazia. Também foram pesquisados pontos de acesso ao armazenamento, manipulação do DOM e eventos. Somente este relatório foi escrito; nenhuma correção foi aplicada à aplicação.

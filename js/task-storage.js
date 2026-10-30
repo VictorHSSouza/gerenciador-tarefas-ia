@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const { validateTask } = globalThis.TaskManager.rules;
+  const { validateTaskCollection } = globalThis.TaskManager.rules;
   const STORAGE_KEY = "gerenciador-tarefas:v1";
 
   // O adaptador mantém somente o estado de persistência; não acessa o DOM.
@@ -13,8 +13,7 @@
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const parsed = raw === null ? [] : JSON.parse(raw);
-        if (!Array.isArray(parsed) || !parsed.every(validateTask)
-            || new Set(parsed.map((task) => task.id)).size !== parsed.length) {
+        if (!validateTaskCollection(parsed)) {
           throw new Error("Formato de armazenamento inválido");
         }
         // Mantém a seleção original de campos, sem migrar ou regravar dados.
@@ -32,6 +31,9 @@
     function writeTasks(tasks) {
       if (!ready) return "unavailable";
       if (localStorage.getItem(STORAGE_KEY) !== snapshot) return "conflict";
+      if (!validateTaskCollection(tasks)) {
+        throw new Error("Formato de armazenamento inválido");
+      }
       const serialized = JSON.stringify(tasks);
       localStorage.setItem(STORAGE_KEY, serialized);
       snapshot = serialized;

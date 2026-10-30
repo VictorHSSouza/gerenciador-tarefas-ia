@@ -19,7 +19,13 @@
   }
 
   function render() {
-    view.render({ tasks, counts: countTasks(tasks), visibleTasks: filterTasks(tasks, view.readFilters()) });
+    try {
+      view.render({ tasks, counts: countTasks(tasks), visibleTasks: filterTasks(tasks, view.readFilters()) });
+      showError("interface-warning", "");
+    } catch {
+      // Uma falha visual não desfaz nem altera o resultado da persistência.
+      showError("interface-warning", "Não foi possível atualizar a interface. Os dados armazenados foram preservados. Recarregue a página para atualizar a exibição.");
+    }
   }
 
   function openForm(id = null) {
@@ -63,35 +69,37 @@
   }
 
   function loadTasks() {
+    let storageError = "";
     try {
       tasks = storage.readTasks();
-      showError("storage-warning", "");
     } catch {
-      showError("storage-warning", "Não foi possível ler as tarefas salvas. O armazenamento pode estar indisponível ou conter dados inválidos. As alterações estão bloqueadas para preservar seus dados. Verifique as permissões do navegador e recarregue a página. Nenhum dado salvo foi apagado.");
+      storageError = "Não foi possível ler as tarefas salvas. O armazenamento pode estar indisponível ou conter dados inválidos. As alterações estão bloqueadas para preservar seus dados. Verifique as permissões do navegador e recarregue a página. Nenhum dado salvo foi apagado.";
     }
+    showError("storage-warning", storageError);
     render();
   }
 
-  // Só atualiza a interface depois da escrita bem-sucedida. Falhas preservam o estado anterior.
+  // O retorno informa somente se a escrita foi concluída, independente da exibição.
   function persistTasks(nextTasks) {
+    let result;
     try {
-      const result = storage.writeTasks(nextTasks);
-      if (result === "unavailable") {
-        notify("Não foi possível salvar: resolva o aviso de armazenamento e recarregue a página.", true);
-        return false;
-      }
-      if (result === "conflict") {
-        loadTasks();
-        notify("As tarefas mudaram em outra aba. A lista foi atualizada; confira os dados antes de tentar novamente.", true);
-        return false;
-      }
-      tasks = nextTasks;
-      render();
-      return true;
+      result = storage.writeTasks(nextTasks);
     } catch {
       notify("Não foi possível salvar. Verifique o espaço e as permissões do navegador. A alteração não foi aplicada.", true);
       return false;
     }
+    if (result === "unavailable") {
+      notify("Não foi possível salvar: resolva o aviso de armazenamento e recarregue a página.", true);
+      return false;
+    }
+    if (result === "conflict") {
+      loadTasks();
+      notify("As tarefas mudaram em outra aba. A lista foi atualizada; confira os dados antes de tentar novamente.", true);
+      return false;
+    }
+    tasks = nextTasks;
+    render();
+    return true;
   }
 
   function saveTask(values) {

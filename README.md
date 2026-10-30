@@ -122,11 +122,11 @@ Os 13 cenários de `tests/tarefas.spec.js` são executados em dois projetos Chro
 
 Cada teste recebe um contexto de navegador novo, com armazenamento vazio. Os cenários de `tarefas.spec.js` criam suas tarefas fictícias pela interface. O LocalStorage real é lido para conferência e preservado durante as recargas; não há simulação, dados pessoais, perfil persistente ou estado compartilhado entre testes. Não há tentativas automáticas adicionais (`retries: 0`).
 
-Na refatoração foi acrescentado um cenário em `tests/compatibilidade.spec.js`, também executado nos dois projetos, totalizando **28 testes** na suíte atual. Esse cenário grava um JSON sintético do formato anterior diretamente no LocalStorage real e recarrega a aplicação: verifica a leitura sem regravação automática e a preservação do ID e demais campos ao editar pela interface. Essa preparação específica não substitui nem intercepta a API Storage.
+Na refatoração foi acrescentado um cenário em `tests/compatibilidade.spec.js`, também executado nos dois projetos, totalizando **28 testes naquela etapa**. Esse cenário grava um JSON sintético do formato anterior diretamente no LocalStorage real e recarrega a aplicação: verifica a leitura sem regravação automática e a preservação do ID e demais campos ao editar pela interface. Essa preparação específica não substitui nem intercepta a API Storage.
 
 Os resultados são gerados em `test-results/results.json` e `playwright-report/index.html`. Para abrir o relatório interativo, use `npx playwright show-report`. Capturas e traces são mantidos quando há falha. Esses artefatos estão no `.gitignore`.
 
-A emulação de celular verifica o layout e as interações no Chromium; não substitui um aparelho físico. A suíte não cobre todos os achados da auditoria, como falhas de quota/permissão, dados corrompidos, concorrência entre abas e atualização na virada do dia. Nenhum resultado da suíte implica que esses problemas foram corrigidos.
+A emulação de celular verifica o layout e as interações no Chromium; não substitui um aparelho físico. Na etapa de segurança foram acrescentados `tests/seguranca.spec.js` e `tests/erros-interface.spec.js`. Eles cobrem tipos inválidos no Storage real, rejeição de escrita inválida, orientação sobre dados sensíveis, falhas controladas de renderização e esgotamento real da quota em um contexto descartável. A suíte não cobre todos os achados da auditoria: permissões de armazenamento de cada navegador, JSON sintaticamente inválido, concorrência entre abas, foco por teclado e atualização na virada do dia ainda não são verificados. Nenhum resultado implica ausência de outros problemas.
 
 ### Resultado da execução do Prompt 3 em 30/10/2026 (antes da refatoração)
 
@@ -139,6 +139,14 @@ Na primeira execução, os testes passaram, mas o encerramento do servidor inici
 O JavaScript foi separado em regras (`js/task-rules.js`), persistência (`js/task-storage.js`), interface (`js/task-view.js`) e controlador (`script.js`). Os scripts clássicos são carregados em ordem com `defer`, sem compilação ou frameworks. A chave e o formato dos dados do LocalStorage foram preservados, sem migração automática.
 
 A suíte original passou antes e depois de cada extração: 26 testes por etapa. A verificação final, incluindo o novo cenário de compatibilidade em desktop e celular, terminou com **28 aprovados e 0 falhas**, em 18,5 segundos. Consulte [REFATORACAO.md](REFATORACAO.md) para as etapas e evidências, e [BUGS_CONHECIDOS.md](BUGS_CONHECIDOS.md) para as pendências preservadas. O comando continua sendo `npx playwright test`.
+
+## Correções de segurança após aprovação
+
+Foram implementadas a exigência de tipos estritos para prioridade/status, a validação da coleção antes de gravar e a separação entre falhas de persistência e de renderização. Dados inválidos permanecem preservados com escrita bloqueada; não há limpeza ou conversão automática. Um erro visual tem aviso próprio e não transforma uma gravação concluída em falha de escrita. O formulário também orienta a não registrar senhas, tokens ou informações sensíveis.
+
+Resultado da última verificação desta etapa: **46 testes aprovados, 0 falhas, 0 ignorados e 0 instáveis**, em **39,0 segundos**, executando `npx playwright test` em desktop e celular. A suíte existente foi mantida e recebeu testes de regressão. As falhas reproduzidas antes das correções e os resultados de cada etapa estão em [CORRECOES_SEGURANCA.md](CORRECOES_SEGURANCA.md).
+
+Concorrência entre abas, recuperação guiada e limites de volume ainda não foram implementados: as opções estão em [PROXIMAS_CORRECOES.md](PROXIMAS_CORRECOES.md), aguardando aprovação. Foco por teclado e atualização de atrasos à meia-noite também permanecem pendentes. Consulte [BUGS_CONHECIDOS.md](BUGS_CONHECIDOS.md) para o estado atualizado.
 
 ## Escopo da implementação inicial (registro histórico)
 

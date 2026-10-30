@@ -27,8 +27,14 @@
       && typeof task.id === "string" && task.id.length > 0 && task.id.length <= 100
       && typeof task.title === "string" && task.title.trim().length > 0 && task.title.length <= 120
       && typeof task.description === "string" && task.description.length <= 2000
-      && Object.hasOwn(PRIORITIES, task.priority) && Object.hasOwn(STATUSES, task.status)
+      && typeof task.priority === "string" && Object.hasOwn(PRIORITIES, task.priority)
+      && typeof task.status === "string" && Object.hasOwn(STATUSES, task.status)
       && isValidDate(task.deadline);
+  }
+
+  function validateTaskCollection(tasks) {
+    return Array.isArray(tasks) && tasks.every(validateTask)
+      && new Set(tasks.map((task) => task.id)).size === tasks.length;
   }
 
   function newId(tasks) {
@@ -41,15 +47,15 @@
 
   // Validação do formulário mantém a ordem e as mensagens originais.
   function validateForm(values) {
-    const title = values.title.trim();
-    const description = values.description.trim();
+    const title = typeof values.title === "string" ? values.title.trim() : "";
+    const description = typeof values.description === "string" ? values.description.trim() : "";
     let invalidField = null;
     let error = "";
     if (!title || title.length > 120) { error = "Informe um título com 1 a 120 caracteres, além de espaços."; invalidField = "task-title"; }
-    else if (description.length > 2000) { error = "A descrição deve ter no máximo 2.000 caracteres."; invalidField = "task-description"; }
+    else if (typeof values.description !== "string" || description.length > 2000) { error = "A descrição deve ser um texto com no máximo 2.000 caracteres."; invalidField = "task-description"; }
     else if (!isValidDate(values.deadline)) { error = "Informe um prazo válido, com dia, mês e ano entre 0001 e 9999."; invalidField = "task-deadline"; }
-    else if (!Object.hasOwn(PRIORITIES, values.priority)) { error = "Selecione uma prioridade válida."; invalidField = "task-priority"; }
-    else if (!Object.hasOwn(STATUSES, values.status)) { error = "Selecione um status válido."; invalidField = "task-status"; }
+    else if (typeof values.priority !== "string" || !Object.hasOwn(PRIORITIES, values.priority)) { error = "Selecione uma prioridade válida."; invalidField = "task-priority"; }
+    else if (typeof values.status !== "string" || !Object.hasOwn(STATUSES, values.status)) { error = "Selecione um status válido."; invalidField = "task-status"; }
     return { title, description, invalidField, error };
   }
 
@@ -69,5 +75,5 @@
     };
   }
 
-  globalThis.TaskManager = { rules: { PRIORITIES, STATUSES, isValidDate, isOverdue, validateTask, validateForm, newId, filterTasks, countTasks } };
+  globalThis.TaskManager = { rules: { PRIORITIES, STATUSES, isValidDate, isOverdue, validateTask, validateTaskCollection, validateForm, newId, filterTasks, countTasks } };
 })();
